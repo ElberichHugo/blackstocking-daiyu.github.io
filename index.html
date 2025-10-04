@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑丝袜·黛玉 - 官方游戏网站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f5f5f5;
+            overflow-x: hidden;
+        }
+        .hero-title {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+        }
+        .decorative-text {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .glow-effect {
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+            transition: all 0.3s ease;
+        }
+        .glow-effect:hover {
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.8);
+            transform: translateY(-2px);
+        }
+        .character-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #dc2626;
+            transition: all 0.3s ease;
+        }
+        .character-card:hover {
+            border-color: #ef4444;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.3);
+        }
+        .character-card.active {
+            border-color: #fbbf24;
+            box-shadow: 0 8px 32px rgba(251, 191, 36, 0.4);
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #dc2626;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #dc2626;
+        }
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particle-container" class="particle-bg"></div>
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-10 w-auto">
+                    <span class="ml-3 text-xl font-bold text-white">黑丝袜·黛玉</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="index.html" class="nav-link active text-white hover:text-red-500 px-3 py-2 text-sm font-medium">首页</a>
+                        <a href="characters.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">角色</a>
+                        <a href="features.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">特色</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-60"></div>
+        <img src="resources/hero-bg.jpg" alt="英雄背景" class="absolute inset-0 w-full h-full object-cover">
+        
+        <div class="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+            <h1 class="hero-title text-6xl md:text-8xl font-black text-white mb-6 leading-tight">
+                <span class="block text-red-600" id="title-part1">黑丝袜</span><span class="block" id="title-part2">·黛玉</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto decorative-text" id="subtitle">
+                当古典文学遇上现代游戏美学，一场跨越时空的红楼梦境即将展开
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center" id="hero-buttons">
+                <button class="glow-effect bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300">
+                    立即体验
+                </button>
+                <button class="glow-effect border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-8 py-4 rounded-lg text-lg font-semibold transition-all duration-300">
+                    观看预告
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 游戏介绍 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">游戏介绍</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    《黑丝袜·黛玉》是一款融合古典文学与现代游戏美学的角色扮演游戏。
+                    在这个重新诠释的红楼梦世界中，传统与创新交织，为您带来前所未有的游戏体验。
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">📜</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">诗词解谜</h3>
+                    <p class="text-gray-400">
+                        通过经典的《红楼梦》诗词，体验独特的解谜玩法。
+                        每一首诗词都蕴含着角色的命运与秘密。
+                    </p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">👥</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">角色互动</h3>
+                    <p class="text-gray-400">
+                        与金陵十二钗建立深厚的情感联系。
+                        每个角色都有独特的故事线和结局。
+                    </p>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-2xl">🌸</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4">大观园</h3>
+                    <p class="text-gray-400">
+                        探索精美的大观园世界，每个角落都隐藏着惊喜。
+                        古典园林与现代游戏设计的完美结合。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 角色选择器 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">主要角色</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    点击下方角色头像，探索每个角色的独特魅力和背景故事
+                </p>
+            </div>
+
+            <!-- 第一行 6 张 -->
+<div class="grid grid-cols-6 gap-4 mb-4">
+    <!-- 1 林黛玉 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="daiyu">
+      <img src="resources/character-daiyu.jpg" alt="林黛玉" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">林黛玉</h3>
+      <p class="text-xs text-gray-400">潇湘妃子</p>
+    </div>
+    <!-- 2 薛宝钗 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="baochai">
+      <img src="resources/character-baochai.jpg" alt="薛宝钗" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">薛宝钗</h3>
+      <p class="text-xs text-gray-400">蘅芜君</p>
+    </div>
+    <!-- 3 贾元春 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="yuanchun">
+      <img src="resources/character-yuanchun.png" alt="贾元春" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">贾元春</h3>
+      <p class="text-xs text-gray-400">贤德妃</p>
+    </div>
+    <!-- 4 贾探春 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="tanchun">
+      <img src="resources/character-tanchun.png" alt="贾探春" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">贾探春</h3>
+      <p class="text-xs text-gray-400">蕉下客</p>
+    </div>
+    <!-- 5 史湘云 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="xiangyun">
+      <img src="resources/character- xiangyun.png" alt="史湘云" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">史湘云</h3>
+      <p class="text-xs text-gray-400">枕霞旧友</p>
+    </div>
+    <!-- 6 妙玉 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="miaoyu">
+      <img src="resources/character- miaoyu.png" alt="妙玉" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">妙玉</h3>
+      <p class="text-xs text-gray-400">栊翠庵主</p>
+    </div>
+  </div>
+  
+  <!-- 第二行 6 张 -->
+  <div class="grid grid-cols-6 gap-4 mb-8">
+    <!-- 7 贾迎春 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="yingchun">
+      <img src="resources/character- yingchun.png" alt="贾迎春" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">贾迎春</h3>
+      <p class="text-xs text-gray-400">二木头</p>
+    </div>
+    <!-- 8 贾惜春 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="xichun">
+      <img src="resources/character-xichun.png" alt="贾惜春" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">贾惜春</h3>
+      <p class="text-xs text-gray-400">藕榭</p>
+    </div>
+    <!-- 9 王熙凤 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="xifeng">
+      <img src="resources/character-xifeng.png" alt="王熙凤" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">王熙凤</h3>
+      <p class="text-xs text-gray-400">凤辣子</p>
+    </div>
+    <!-- 10 贾巧姐 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="qiaojie">
+      <img src="resources/character-qiaojie.png" alt="贾巧姐" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">贾巧姐</h3>
+      <p class="text-xs text-gray-400">巧哥儿</p>
+    </div>
+    <!-- 11 李纨 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="liwan">
+      <img src="resources/character-liwan.png" alt="李纨" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">李纨</h3>
+      <p class="text-xs text-gray-400">稻香老农</p>
+    </div>
+    <!-- 12 秦可卿 -->
+    <div class="character-card rounded-lg p-4 cursor-pointer text-center" data-character="keqing">
+      <img src="resources/character-keqing.png" alt="秦可卿" class="w-full h-24 object-cover rounded-lg mb-3">
+      <h3 class="text-sm font-semibold text-white">秦可卿</h3>
+      <p class="text-xs text-gray-400">兼美仙子</p>
+    </div>
+  </div>
+
+            <!-- 角色详情展示 -->
+            <div class="bg-gray-900 rounded-xl p-8" id="character-display">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <img id="character-image" src="resources/character-daiyu.jpg" alt="角色大图" class="w-full h-98 object-cover rounded-lg">
+                    </div>
+                    <div>
+                        <h3 class="hero-title text-3xl font-bold text-white mb-4" id="character-name">林黛玉</h3>
+                        <p class="text-gray-400 mb-6" id="character-description">
+                            姑苏林如海之女，母贾敏早亡，遂寄居荣府。眉尖若蹙，眸含秋水，通身孤高自许，一派天然风流。七岁能诗，八岁读《四书》，才思敏捷，一挥便就。性本真挚，口角锋芒，善谑善哭，泪珠儿终年化不开。所居潇湘馆，凤尾森森，龙吟细细，月下抚琴，声声都是离魂。判词"绛珠仙草"还泪而来，终身以情为命，情尽而逝，香魂一缕随花飞。
+                        </p>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-lg font-semibold text-red-400 mb-2">性格特征</h4>
+                                <p class="text-gray-300" id="character-personality">孤高自许 · 目下无尘 · 才情冠世</p>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-red-400 mb-2">专属诗词</h4>
+                                <p class="text-gray-300 italic decorative-text" id="character-poem">
+                                    "花谢花飞花满天，红消香断有谁怜？游丝软系飘春榭，落絮轻沾扑绣帘。"
+                                </p>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-red-400 mb-2">特殊技能</h4>
+                                <p class="text-gray-300" id="character-skills">诗词解谜 · 情感感知 · 古琴演奏</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 新闻动态 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">最新动态</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <article class="bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300">
+                    <img src="https://kimi-web-img.moonshot.cn/img/imgcdn.httpcn.com/9051660266aac1cc6914b6ddb3677d57ad787867.jpg" alt="新闻图片" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-2">游戏开发进展</h3>
+                        <p class="text-gray-400 mb-4">我们很高兴地宣布，《黑丝袜·黛玉》的核心开发工作已经完成，正在进行最后的优化和测试阶段。</p>
+                        <span class="text-red-400 text-sm">2024年10月4日</span>
+                    </div>
+                </article>
+                
+                <article class="bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300">
+                    <img src="https://kimi-web-img.moonshot.cn/img/upload.wikimedia.org/391e3a538261593750832ae46dc157719dc55f74.jpg" alt="新闻图片" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-2">角色设计揭秘</h3>
+                        <p class="text-gray-400 mb-4">深入了解我们如何重新诠释经典角色，为每个角色注入现代美学元素，同时保持其文化内涵。</p>
+                        <span class="text-red-400 text-sm">2024年10月1日</span>
+                    </div>
+                </article>
+                
+                <article class="bg-gray-900 rounded-lg overflow-hidden hover:transform hover:scale-105 transition-all duration-300">
+                    <img src="https://kimi-web-img.moonshot.cn/img/5b0988e595225.cdn.sohucs.com/f146d0ac679f9bf9c420efb87fd98c9f3e659d13.jpeg" alt="新闻图片" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-white mb-2">诗词系统详解</h3>
+                        <p class="text-gray-400 mb-4">探索游戏中独特的诗词解谜系统，了解如何通过古典文学元素创造全新的游戏体验。</p>
+                        <span class="text-red-400 text-sm">2024年9月28日</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-black py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="mb-8">
+                <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-12 w-auto mx-auto mb-4">
+                <p class="text-gray-400">© 2024 黑丝袜·黛玉 游戏开发团队. 保留所有权利.</p>
+            </div>
+            <div class="text-gray-500 text-sm">
+                <p>本游戏基于《红楼梦》改编，致敬经典文学，传承中华文化</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

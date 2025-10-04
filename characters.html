@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色介绍 - 黑丝袜·黛玉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f5f5f5;
+            overflow-x: hidden;
+        }
+        .hero-title {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+        }
+        .decorative-text {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .character-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid #dc2626;
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .character-node:hover {
+            border-color: #ef4444;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+            transform: scale(1.1);
+        }
+        .character-node.active {
+            border-color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+        }
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #dc2626, transparent);
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #dc2626;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #dc2626;
+        }
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+        .character-detail-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #dc2626;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        .character-detail-card:hover {
+            border-color: #ef4444;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.2);
+        }
+        .filter-btn {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #374151;
+            color: #d1d5db;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            border-color: #dc2626;
+            color: #dc2626;
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particle-container" class="particle-bg"></div>
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-10 w-auto">
+                    <span class="ml-3 text-xl font-bold text-white">黑丝袜·黛玉</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="index.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">首页</a>
+                        <a href="characters.html" class="nav-link active text-white hover:text-red-500 px-3 py-2 text-sm font-medium">角色</a>
+                        <a href="features.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">特色</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="hero-title text-5xl md:text-6xl font-black text-white mb-6">金陵十二钗</h1>
+            <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                探索《红楼梦》中十二位绝代佳人的命运交织，每一位都有着独特的故事和魅力
+            </p>
+        </div>
+    </section>
+
+    <!-- 筛选器 -->
+    <section class="py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="jia">贾家</button>
+                <button class="filter-btn" data-filter="xue">薛家</button>
+                <button class="filter-btn" data-filter="wang">王家</button>
+                <button class="filter-btn" data-filter="shi">史家</button>
+                <button class="filter-btn" data-filter="servant">丫鬟</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 角色关系图谱 -->
+    <section class="py-12 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="relative bg-gray-900 rounded-xl p-8" style="height: 600px;" id="character-map">
+                <!-- 连接线 -->
+                <div class="connection-line" style="width: 200px; top: 150px; left: 200px; transform: rotate(45deg);"></div>
+                <div class="connection-line" style="width: 180px; top: 250px; left: 300px; transform: rotate(-30deg);"></div>
+                <div class="connection-line" style="width: 220px; top: 350px; left: 250px; transform: rotate(60deg);"></div>
+                
+                <!-- 角色节点 -->
+                <div class="character-node" style="top: 100px; left: 150px;" data-character="daiyu" data-family="jia">
+                    <img src="resources/character-daiyu.jpg" alt="林黛玉" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 200px; left: 350px;" data-character="baoyu" data-family="jia">
+                    <img src="resources/character-baoyu.jpg" alt="贾宝玉" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 150px; left: 550px;" data-character="baochai" data-family="xue">
+                    <img src="resources/character-baochai.jpg" alt="薛宝钗" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 300px; left: 100px;" data-character="xifeng" data-family="wang">
+                    <img src="https://kimi-web-img.moonshot.cn/img/img.ixintu.com/c41f621e30d9455b4303419db0b3fdaeacc03ed6.jpg!con0" alt="王熙凤" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 350px; left: 400px;" data-character="yuchuan" data-family="servant">
+                    <img src="https://kimi-web-img.moonshot.cn/img/inews.gtimg.com/7f81bb85d4b9bee35e3232e22634f45a3894c657" alt="晴雯" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 400px; left: 250px;" data-character="xiren" data-family="servant">
+                    <img src="https://kimi-web-img.moonshot.cn/img/5b0988e595225.cdn.sohucs.com/a2e739ba78f75fc05bd004136a416fe8412c9f9d.jpg" alt="袭人" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 450px; left: 500px;" data-character="miaoyu" data-family="other">
+                    <img src="https://kimi-web-img.moonshot.cn/img/preview.redd.it/68233f173cbc053498be781e416b3ebd715bf48c.png" alt="妙玉" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 250px; left: 600px;" data-character="qinkeqing" data-family="jia">
+                    <img src="https://kimi-web-img.moonshot.cn/img/bkimg.cdn.bcebos.com/af0a50e28d0829c5eff658e68d7be87e2ed349f4" alt="秦可卿" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 120px; left: 350px;" data-character="yuanchun" data-family="jia">
+                    <img src="https://kimi-web-img.moonshot.cn/img/preview.redd.it/ac8432e2a954e62e857c93570a2b0fadbc475f6a.png" alt="元春" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 180px; left: 450px;" data-character="yingchun" data-family="jia">
+                    <img src="https://kimi-web-img.moonshot.cn/img/pic.huitu.com/f03c4d766fcbfb1b112bcb95cc326ae9513aac8e.jpg" alt="迎春" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 320px; left: 550px;" data-character="xichun" data-family="jia">
+                    <img src="https://kimi-web-img.moonshot.cn/img/img01.hua.com/9160b40b7350ef64523e201145f5454359b2edde.jpg" alt="惜春" class="w-full h-full object-cover rounded-full">
+                </div>
+                <div class="character-node" style="top: 380px; left: 150px;" data-character="qiaojie" data-family="jia">
+                    <img src="https://kimi-web-img.moonshot.cn/img/gw.alicdn.com/b3d0aeab548e48c76e6b221cdf400c2617eb4960.webp" alt="巧姐" class="w-full h-full object-cover rounded-full">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 角色详情面板 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="character-detail-card" id="character-detail">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1">
+                        <img id="detail-image" src="resources/character-daiyu.jpg" alt="角色大图" class="w-full h-80 object-cover rounded-lg mb-6">
+                        <div class="text-center">
+                            <h3 class="hero-title text-2xl font-bold text-white mb-2" id="detail-name">林黛玉</h3>
+                            <p class="text-red-400" id="detail-title">潇湘妃子</p>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-xl font-bold text-red-400 mb-3">角色背景</h4>
+                                <p class="text-gray-300 leading-relaxed" id="detail-background">
+                                    林黛玉，金陵十二钗之首，才情出众，诗词双绝。她聪慧敏感，多愁善感，与贾宝玉有着深厚的情感纠葛。在《黑丝袜·黛玉》中，她将以全新的形象出现，黑色丝袜衬托出她纤细的身姿，为古典美人增添现代魅力。
+                                </p>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-red-400 mb-3">性格特征</h4>
+                                <div class="flex flex-wrap gap-2" id="detail-traits">
+                                    <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm">聪慧敏感</span>
+                                    <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm">才情出众</span>
+                                    <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm">多愁善感</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-red-400 mb-3">专属诗词</h4>
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="text-gray-300 italic decorative-text text-lg leading-relaxed" id="detail-poem">
+                                        "花谢花飞花满天，红消香断有谁怜？\n游丝软系飘春榭，落絮轻沾扑绣帘。"
+                                    </p>
+                                    <p class="text-red-400 text-sm mt-2">— 《葬花吟》</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-red-400 mb-3">特殊技能</h4>
+                                <div class="grid grid-cols-2 gap-4" id="detail-skills">
+                                    <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                        <span class="text-2xl mb-2 block">📝</span>
+                                        <p class="text-white font-semibold">诗词解谜</p>
+                                        <p class="text-gray-400 text-sm">通过诗词解开谜题</p>
+                                    </div>
+                                    <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                        <span class="text-2xl mb-2 block">💫</span>
+                                        <p class="text-white font-semibold">情感感知</p>
+                                        <p class="text-gray-400 text-sm">感知他人情感变化</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-red-400 mb-3">属性雷达图</h4>
+                                <div id="radar-chart" style="width: 100%; height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 角色对比 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">角色对比</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    选择两个角色进行详细对比，了解他们之间的差异和联系
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="character-detail-card">
+                    <h3 class="text-xl font-bold text-white mb-4">选择角色A</h3>
+                    <select id="character-a" class="w-full bg-gray-800 text-white p-3 rounded-lg mb-4">
+                        <option value="daiyu">林黛玉</option>
+                        <option value="baoyu">贾宝玉</option>
+                        <option value="baochai">薛宝钗</option>
+                        <option value="xifeng">王熙凤</option>
+                    </select>
+                    <div id="character-a-info">
+                        <img src="resources/character-daiyu.jpg" alt="角色A" class="w-full h-48 object-cover rounded-lg mb-4">
+                        <h4 class="text-lg font-bold text-red-400">林黛玉</h4>
+                        <p class="text-gray-400 text-sm">潇湘妃子</p>
+                    </div>
+                </div>
+
+                <div class="character-detail-card">
+                    <h3 class="text-xl font-bold text-white mb-4">选择角色B</h3>
+                    <select id="character-b" class="w-full bg-gray-800 text-white p-3 rounded-lg mb-4">
+                        <option value="baoyu">贾宝玉</option>
+                        <option value="daiyu">林黛玉</option>
+                        <option value="baochai">薛宝钗</option>
+                        <option value="xifeng">王熙凤</option>
+                    </select>
+                    <div id="character-b-info">
+                        <img src="resources/character-baoyu.jpg" alt="角色B" class="w-full h-48 object-cover rounded-lg mb-4">
+                        <h4 class="text-lg font-bold text-red-400">贾宝玉</h4>
+                        <p class="text-gray-400 text-sm">通灵宝玉</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="character-detail-card mt-8">
+                <h3 class="text-xl font-bold text-white mb-4">属性对比</h3>
+                <div id="comparison-chart" style="width: 100%; height: 400px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-black py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="mb-8">
+                <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-12 w-auto mx-auto mb-4">
+                <p class="text-gray-400">© 2024 黑丝袜·黛玉 游戏开发团队. 保留所有权利.</p>
+            </div>
+            <div class="text-gray-500 text-sm">
+                <p>本游戏基于《红楼梦》改编，致敬经典文学，传承中华文化</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // 角色页面特定的JavaScript代码
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharacterMap();
+            initializeCharacterComparison();
+        });
+
+        // 初始化角色图谱
+        function initializeCharacterMap() {
+            const nodes = document.querySelectorAll('.character-node');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            // 筛选功能
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+                    
+                    // 更新按钮状态
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 筛选节点
+                    nodes.forEach(node => {
+                        if (filter === 'all' || node.dataset.family === filter) {
+                            node.style.display = 'flex';
+                            anime({
+                                targets: node,
+                                opacity: [0, 1],
+                                scale: [0.5, 1],
+                                duration: 300,
+                                easing: 'easeOutQuad'
+                            });
+                        } else {
+                            anime({
+                                targets: node,
+                                opacity: [1, 0],
+                                scale: [1, 0.5],
+                                duration: 300,
+                                easing: 'easeInQuad',
+                                complete: function() {
+                                    node.style.display = 'none';
+                                }
+                            });
+                        }
+                    });
+                });
+            });
+            
+            // 节点点击事件
+            nodes.forEach(node => {
+                node.addEventListener('click', function() {
+                    // 移除所有active状态
+                    nodes.forEach(n => n.classList.remove('active'));
+                    // 添加active状态到当前节点
+                    this.classList.add('active');
+                    
+                    // 更新角色详情
+                    updateCharacterDetail(this.dataset.character);
+                });
+            });
+        }
+
+        // 更新角色详情
+        function updateCharacterDetail(characterKey) {
+            const character = characterData[characterKey];
+            if (!character) return;
+            
+            // 更新基本信息
+            document.getElementById('detail-image').src = character.image;
+            document.getElementById('detail-name').textContent = character.name;
+            document.getElementById('detail-title').textContent = character.title;
+            document.getElementById('detail-background').textContent = character.description;
+            
+            // 更新性格特征
+            const traitsContainer = document.getElementById('detail-traits');
+            traitsContainer.innerHTML = '';
+            character.personality.split(' · ').forEach(trait => {
+                const span = document.createElement('span');
+                span.className = 'bg-red-600 text-white px-3 py-1 rounded-full text-sm';
+                span.textContent = trait;
+                traitsContainer.appendChild(span);
+            });
+            
+            // 更新诗词
+            document.getElementById('detail-poem').textContent = character.poem;
+            
+            // 更新技能
+            const skillsContainer = document.getElementById('detail-skills');
+            skillsContainer.innerHTML = '';
+            character.skills.split(' · ').forEach(skill => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-800 p-3 rounded-lg text-center';
+                div.innerHTML = `
+                    <span class="text-2xl mb-2 block">✨</span>
+                    <p class="text-white font-semibold">${skill}</p>
+                `;
+                skillsContainer.appendChild(div);
+            });
+            
+            // 更新雷达图
+            updateRadarChart(characterKey);
+            
+            // 动画效果
+            anime({
+                targets: '#character-detail',
+                opacity: [1, 0.3, 1],
+                duration: 600,
+                easing: 'easeInOutQuad'
+            });
+        }
+
+        // 更新雷达图
+        function updateRadarChart(characterKey) {
+            const chart = echarts.init(document.getElementById('radar-chart'));
+            
+            // 角色属性数据
+            const characterStats = {
+                daiyu: { 才情: 95, 美貌: 90, 智慧: 85, 魅力: 88, 武艺: 20, 医术: 30 },
+                baoyu: { 才情: 80, 美貌: 85, 智慧: 75, 魅力: 90, 武艺: 40, 医术: 60 },
+                baochai: { 才情: 85, 美貌: 88, 智慧: 90, 魅力: 85, 武艺: 30, 医术: 70 },
+                xifeng: { 才情: 70, 美貌: 80, 智慧: 95, 魅力: 75, 武艺: 50, 医术: 40 }
+            };
+            
+            const stats = characterStats[characterKey] || characterStats.daiyu;
+            
+            const option = {
+                backgroundColor: 'transparent',
+                radar: {
+                    indicator: [
+                        { name: '才情', max: 100 },
+                        { name: '美貌', max: 100 },
+                        { name: '智慧', max: 100 },
+                        { name: '魅力', max: 100 },
+                        { name: '武艺', max: 100 },
+                        { name: '医术', max: 100 }
+                    ],
+                    axisName: {
+                        color: '#f5f5f5'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#374151'
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#374151'
+                        }
+                    }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: Object.values(stats),
+                        name: characterData[characterKey]?.name || '林黛玉',
+                        areaStyle: {
+                            color: 'rgba(220, 38, 38, 0.3)'
+                        },
+                        lineStyle: {
+                            color: '#dc2626'
+                        },
+                        itemStyle: {
+                            color: '#dc2626'
+                        }
+                    }]
+                }]
+            };
+            
+            chart.setOption(option);
+        }
+
+        // 初始化角色对比
+        function initializeCharacterComparison() {
+            const selectA = document.getElementById('character-a');
+            const selectB = document.getElementById('character-b');
+            
+            selectA.addEventListener('change', updateComparison);
+            selectB.addEventListener('change', updateComparison);
+            
+            updateComparison();
+        }
+
+        // 更新对比
+        function updateComparison() {
+            const selectA = document.getElementById('character-a');
+            const selectB = document.getElementById('character-b');
+            const characterA = selectA.value;
+            const characterB = selectB.value;
+            
+            // 更新角色信息
+            updateCharacterInfo('character-a-info', characterA);
+            updateCharacterInfo('character-b-info', characterB);
+            
+            // 更新对比图表
+            updateComparisonChart(characterA, characterB);
+        }
+
+        // 更新对比
+        function updateComparison() {
+            const characterA = selectA.value;
+            const characterB = selectB.value;
+            
+            // 更新角色信息
+            updateCharacterInfo('character-a-info', characterA);
+            updateCharacterInfo('character-b-info', characterB);
+            
+            // 更新对比图表
+            updateComparisonChart(characterA, characterB);
+        }
+
+        // 更新角色信息
+        function updateCharacterInfo(containerId, characterKey) {
+            const character = characterData[characterKey];
+            const container = document.getElementById(containerId);
+            
+            container.innerHTML = `
+                <img src="${character.image}" alt="${character.name}" class="w-full h-48 object-cover rounded-lg mb-4">
+                <h4 class="text-lg font-bold text-red-400">${character.name}</h4>
+                <p class="text-gray-400 text-sm">${character.title}</p>
+            `;
+        }
+
+        // 更新对比图表
+        function updateComparisonChart(characterA, characterB) {
+            const chart = echarts.init(document.getElementById('comparison-chart'));
+            
+            const characterStats = {
+                daiyu: { 才情: 95, 美貌: 90, 智慧: 85, 魅力: 88, 武艺: 20, 医术: 30 },
+                baoyu: { 才情: 80, 美貌: 85, 智慧: 75, 魅力: 90, 武艺: 40, 医术: 60 },
+                baochai: { 才情: 85, 美貌: 88, 智慧: 90, 魅力: 85, 武艺: 30, 医术: 70 },
+                xifeng: { 才情: 70, 美貌: 80, 智慧: 95, 魅力: 75, 武艺: 50, 医术: 40 }
+            };
+            
+            const statsA = characterStats[characterA];
+            const statsB = characterStats[characterB];
+            
+            const option = {
+                backgroundColor: 'transparent',
+                legend: {
+                    data: [characterData[characterA].name, characterData[characterB].name],
+                    textStyle: {
+                        color: '#f5f5f5'
+                    }
+                },
+                radar: {
+                    indicator: [
+                        { name: '才情', max: 100 },
+                        { name: '美貌', max: 100 },
+                        { name: '智慧', max: 100 },
+                        { name: '魅力', max: 100 },
+                        { name: '武艺', max: 100 },
+                        { name: '医术', max: 100 }
+                    ],
+                    axisName: {
+                        color: '#f5f5f5'
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: '#374151'
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#374151'
+                        }
+                    }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [
+                        {
+                            value: Object.values(statsA),
+                            name: characterData[characterA].name,
+                            areaStyle: {
+                                color: 'rgba(220, 38, 38, 0.3)'
+                            },
+                            lineStyle: {
+                                color: '#dc2626'
+                            }
+                        },
+                        {
+                            value: Object.values(statsB),
+                            name: characterData[characterB].name,
+                            areaStyle: {
+                                color: 'rgba(59, 130, 246, 0.3)'
+                            },
+                            lineStyle: {
+                                color: '#3b82f6'
+                            }
+                        }
+                    ]
+                }]
+            };
+            
+            chart.setOption(option);
+        }
+    </script>
+</body>
+</html>

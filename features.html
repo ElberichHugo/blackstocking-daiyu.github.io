@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏特色 - 黑丝袜·黛玉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #f5f5f5;
+            overflow-x: hidden;
+        }
+        .hero-title {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+        }
+        .decorative-text {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .feature-card {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #374151;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            border-color: #dc2626;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.2);
+        }
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #dc2626;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #dc2626;
+        }
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .scroll-reveal.revealed {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s ease;
+        }
+        .poem-game {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #dc2626;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .poem-blank {
+            display: inline-block;
+            min-width: 60px;
+            height: 40px;
+            border: 2px dashed #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+            margin: 0 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .poem-blank:hover {
+            background: rgba(220, 38, 38, 0.2);
+        }
+        .poem-blank.filled {
+            background: rgba(220, 38, 38, 0.3);
+            border-style: solid;
+        }
+        .character-option {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 4px;
+            background: linear-gradient(145deg, #374151, #4b5563);
+            border: 1px solid #6b7280;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .character-option:hover {
+            border-color: #dc2626;
+            background: linear-gradient(145deg, #4b5563, #6b7280);
+        }
+        .character-option.selected {
+            background: linear-gradient(145deg, #dc2626, #ef4444);
+            border-color: #dc2626;
+            color: white;
+        }
+        .config-panel {
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .config-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #374151;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .config-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #dc2626;
+            cursor: pointer;
+        }
+        .config-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #dc2626;
+            cursor: pointer;
+            border: none;
+        }
+        .preview-area {
+            background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+            border: 1px solid #374151;
+            border-radius: 12px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .black-silk-mode {
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+        .petal {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #dc2626;
+            border-radius: 50% 0;
+            opacity: 0.7;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(500px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 粒子背景 -->
+    <div id="particle-container" class="particle-bg"></div>
+
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-50 bg-black bg-opacity-80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-10 w-auto">
+                    <span class="ml-3 text-xl font-bold text-white">黑丝袜·黛玉</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="index.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">首页</a>
+                        <a href="characters.html" class="nav-link text-gray-300 hover:text-red-500 px-3 py-2 text-sm font-medium">角色</a>
+                        <a href="features.html" class="nav-link active text-white hover:text-red-500 px-3 py-2 text-sm font-medium">特色</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <section class="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="hero-title text-5xl md:text-6xl font-black text-white mb-6">游戏特色</h1>
+            <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                体验独特的诗词解谜系统，探索大观园的秘密，感受古典文学与现代游戏的完美融合
+            </p>
+        </div>
+    </section>
+
+    <!-- 诗词解谜游戏 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">诗词解谜</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    通过经典的《红楼梦》诗词，解开一个个精心设计的谜题，深入了解角色的内心世界
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="poem-game">
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-bold text-white mb-4">第 <span id="level-number">1</span> 关</h3>
+                            <div class="bg-gray-800 p-6 rounded-lg">
+                                <p class="text-xl text-gray-300 leading-relaxed decorative-text" id="poem-display">
+                                    花谢花飞花满天，<span class="poem-blank" data-answer="红"></span>消香断有谁怜？<br>
+                                    游丝软系飘春榭，落絮轻沾扑绣帘。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-red-400 mb-3">选择正确的字填入空白处：</h4>
+                            <div id="character-options">
+                                <span class="character-option" data-char="红">红</span>
+                                <span class="character-option" data-char="白">白</span>
+                                <span class="character-option" data-char="香">香</span>
+                                <span class="character-option" data-char="色">色</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button id="check-answer" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                                检查答案
+                            </button>
+                            <button id="next-level" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300" disabled>
+                                下一关
+                            </button>
+                            <button id="hint-btn" class="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                                提示
+                            </button>
+                        </div>
+
+                        <div id="feedback" class="mt-4 p-4 rounded-lg hidden">
+                            <p class="text-white font-semibold" id="feedback-text"></p>
+                        </div>
+
+                        <div id="hint" class="mt-4 p-4 bg-gray-800 rounded-lg hidden">
+                            <p class="text-gray-300" id="hint-text"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="config-panel">
+                        <h3 class="text-xl font-bold text-white mb-4">游戏统计</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">当前关卡：</span>
+                                <span class="text-white font-semibold" id="current-level">1/10</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">正确答案：</span>
+                                <span class="text-green-400 font-semibold" id="correct-count">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">错误答案：</span>
+                                <span class="text-red-400 font-semibold" id="wrong-count">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">准确率：</span>
+                                <span class="text-yellow-400 font-semibold" id="accuracy">0%</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <h4 class="text-lg font-semibold text-red-400 mb-3">已解锁成就</h4>
+                            <div class="space-y-2" id="achievements">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">🏆</span>
+                                    <span class="text-gray-300 text-sm">诗词新手</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 游戏配置模拟器 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">游戏配置</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    调整游戏设置，实时预览效果，找到最适合您的游戏体验
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="config-panel">
+                    <h3 class="text-xl font-bold text-white mb-6">设置选项</h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-300 mb-2">画质设置</label>
+                            <input type="range" class="config-slider" id="graphics-quality" min="1" max="5" value="3">
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>低</span>
+                                <span>中</span>
+                                <span>高</span>
+                                <span>超高</span>
+                                <span>极致</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 mb-2">音效音量</label>
+                            <input type="range" class="config-slider" id="sound-volume" min="0" max="100" value="70">
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 mb-2">游戏难度</label>
+                            <input type="range" class="config-slider" id="game-difficulty" min="1" max="5" value="3">
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>简单</span>
+                                <span>普通</span>
+                                <span>困难</span>
+                                <span>专家</span>
+                                <span>地狱</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-300 mb-2">文字速度</label>
+                            <input type="range" class="config-slider" id="text-speed" min="1" max="5" value="3">
+                            <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                <span>很慢</span>
+                                <span>慢</span>
+                                <span>正常</span>
+                                <span>快</span>
+                                <span>很快</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">黑丝袜模式</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" id="black-silk-mode">
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">粒子特效</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" id="particle-effects" checked>
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">古风音乐</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" id="classical-music" checked>
+                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex gap-4">
+                        <button id="save-config" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1">
+                            保存配置
+                        </button>
+                        <button id="reset-config" class="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex-1">
+                            重置默认
+                        </button>
+                    </div>
+                </div>
+
+                <div class="preview-area" id="preview-area">
+                    <div class="text-center">
+                        <h3 class="text-2xl font-bold text-white mb-4">预览效果</h3>
+                        <img src="resources/character-daiyu.jpg" alt="预览角色" class="w-32 h-32 object-cover rounded-full mx-auto mb-4">
+                        <p class="text-gray-300 decorative-text">调整设置查看实时效果</p>
+                        <div class="mt-4">
+                            <span class="text-red-400 font-semibold" id="preview-quality">高清画质</span>
+                            <span class="text-gray-400 mx-2">·</span>
+                            <span class="text-red-400 font-semibold" id="preview-difficulty">普通难度</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 世界观介绍 -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8 scroll-reveal">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="hero-title text-4xl md:text-5xl font-bold text-white mb-6">大观园世界</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    在这个重新诠释的红楼梦世界中，古典美学与现代元素完美融合
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="feature-card rounded-lg p-6">
+                    <img src="https://kimi-web-img.moonshot.cn/img/imgcdn.httpcn.com/9051660266aac1cc6914b6ddb3677d57ad787867.jpg" alt="大观园" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold text-white mb-3">精美场景</h3>
+                    <p class="text-gray-400">
+                        大观园中的每个场景都经过精心设计，从怡红院到潇湘馆，
+                        每个角落都充满了古典美学的韵味和现代游戏的视觉冲击力。
+                    </p>
+                </div>
+
+                <div class="feature-card rounded-lg p-6">
+                    <img src="https://kimi-web-img.moonshot.cn/img/upload.wikimedia.org/391e3a538261593750832ae46dc157719dc55f74.jpg" alt="诗词系统" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold text-white mb-3">诗词系统</h3>
+                    <p class="text-gray-400">
+                        独创的诗词解谜系统，让玩家在享受游戏乐趣的同时，
+                        深入了解中国古典文学的魅力，每个谜题都与角色命运紧密相连。
+                    </p>
+                </div>
+
+                <div class="feature-card rounded-lg p-6">
+                    <img src="https://kimi-web-img.moonshot.cn/img/5b0988e595225.cdn.sohucs.com/f146d0ac679f9bf9c420efb87fd98c9f3e659d13.jpeg" alt="角色互动" class="w-full h-48 object-cover rounded-lg mb-4">
+                    <h3 class="text-xl font-bold text-white mb-3">深度互动</h3>
+                    <p class="text-gray-400">
+                        与金陵十二钗建立深厚的情感联系，每个选择都会影响故事走向，
+                        多重结局系统让每次游戏都有全新的体验。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-black py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <div class="mb-8">
+                <img src="resources/game-logo.jpg" alt="游戏Logo" class="h-12 w-auto mx-auto mb-4">
+                <p class="text-gray-400">© 2024 黑丝袜·黛玉 游戏开发团队. 保留所有权利.</p>
+            </div>
+            <div class="text-gray-500 text-sm">
+                <p>本游戏基于《红楼梦》改编，致敬经典文学，传承中华文化</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // 诗词游戏数据
+        const poemLevels = [
+            {
+                poem: "花谢花飞花满天，<span class='poem-blank' data-answer='红'></span>消香断有谁怜？<br>游丝软系飘春榭，落絮轻沾扑绣帘。",
+                options: ["红", "白", "香", "色"],
+                answer: "红",
+                hint: "形容花的颜色，常与喜庆相关",
+                explanation: "这是林黛玉《葬花吟》中的名句，'红消香断'形容花朵凋零的美丽哀愁。"
+            },
+            {
+                poem: "无故寻愁觅恨，有时似傻如<span class='poem-blank' data-answer='狂'></span>。<br>纵然生得好皮囊，腹内原来草莽。",
+                options: ["狂", "癫", "疯", "痴"],
+                answer: "狂",
+                hint: "形容行为失常，但有真性情",
+                explanation: "这是《西江月》中的诗句，形容贾宝玉的叛逆性格和不拘礼法。"
+            },
+            {
+                poem: "珍重芳姿昼掩门，自携手瓮灌苔<span class='poem-blank' data-answer='盆'></span>。<br>胭脂洗出秋阶影，冰雪招来露砌魂。",
+                options: ["盆", "瓶", "罐", "壶"],
+                answer: "盆",
+                hint: "种植花草的容器",
+                explanation: "这是薛宝钗咏白海棠的诗句，展现了她端庄贤淑的品格。"
+            }
+        ];
+
+        let currentLevel = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+        let selectedCharacter = null;
+
+        // 页面特定的JavaScript代码
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePoemGame();
+            initializeConfigSimulator();
+        });
+
+        // 初始化诗词游戏
+        function initializePoemGame() {
+            loadLevel(currentLevel);
+            
+            // 字符选项点击事件
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('character-option')) {
+                    // 移除其他选中状态
+                    document.querySelectorAll('.character-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    // 选中当前选项
+                    e.target.classList.add('selected');
+                    selectedCharacter = e.target.dataset.char;
+                    
+                    // 填入空白处
+                    const blank = document.querySelector('.poem-blank');
+                    if (blank) {
+                        blank.textContent = selectedCharacter;
+                        blank.classList.add('filled');
+                    }
+                }
+            });
+
+            // 检查答案按钮
+            document.getElementById('check-answer').addEventListener('click', checkAnswer);
+            
+            // 下一关按钮
+            document.getElementById('next-level').addEventListener('click', nextLevel);
+            
+            // 提示按钮
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+        }
+
+        // 加载关卡
+        function loadLevel(levelIndex) {
+            if (levelIndex >= poemLevels.length) {
+                showGameComplete();
+                return;
+            }
+
+            const level = poemLevels[levelIndex];
+            
+            // 更新关卡信息
+            document.getElementById('level-number').textContent = levelIndex + 1;
+            document.getElementById('current-level').textContent = `${levelIndex + 1}/${poemLevels.length}`;
+            
+            // 更新诗词显示
+            document.getElementById('poem-display').innerHTML = level.poem;
+            
+            // 更新选项
+            const optionsContainer = document.getElementById('character-options');
+            optionsContainer.innerHTML = '';
+            level.options.forEach(option => {
+                const span = document.createElement('span');
+                span.className = 'character-option';
+                span.dataset.char = option;
+                span.textContent = option;
+                optionsContainer.appendChild(span);
+            });
+            
+            // 重置状态
+            selectedCharacter = null;
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('hint').classList.add('hidden');
+            document.getElementById('next-level').disabled = true;
+            
+            // 动画效果
+            anime({
+                targets: '.poem-game',
+                opacity: [0.5, 1],
+                scale: [0.95, 1],
+                duration: 500,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // 检查答案
+        function checkAnswer() {
+            if (!selectedCharacter) {
+                showFeedback('请先选择一个字符填入空白处', 'warning');
+                return;
+            }
+
+            const level = poemLevels[currentLevel];
+            const isCorrect = selectedCharacter === level.answer;
+            
+            if (isCorrect) {
+                correctAnswers++;
+                showFeedback('恭喜！答案正确！', 'success');
+                document.getElementById('next-level').disabled = false;
+                
+                // 创建庆祝粒子效果
+                createCelebrationParticles();
+                
+                // 显示诗词解释
+                setTimeout(() => {
+                    showFeedback(level.explanation, 'info');
+                }, 2000);
+            } else {
+                wrongAnswers++;
+                showFeedback('答案错误，请再试一次', 'error');
+            }
+            
+            updateStats();
+        }
+
+        // 显示反馈
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            const feedbackText = document.getElementById('feedback-text');
+            
+            feedbackText.textContent = message;
+            feedback.className = `mt-4 p-4 rounded-lg ${getFeedbackClass(type)}`;
+            feedback.classList.remove('hidden');
+            
+            anime({
+                targets: feedback,
+                opacity: [0, 1],
+                translateY: [-20, 0],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // 获取反馈样式
+        function getFeedbackClass(type) {
+            switch(type) {
+                case 'success': return 'bg-green-600';
+                case 'error': return 'bg-red-600';
+                case 'warning': return 'bg-yellow-600';
+                case 'info': return 'bg-blue-600';
+                default: return 'bg-gray-600';
+            }
+        }
+
+        // 显示提示
+        function showHint() {
+            const level = poemLevels[currentLevel];
+            const hint = document.getElementById('hint');
+            const hintText = document.getElementById('hint-text');
+            
+            hintText.textContent = level.hint;
+            hint.classList.remove('hidden');
+            
+            anime({
+                targets: hint,
+                opacity: [0, 1],
+                translateY: [-20, 0],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // 下一关
+        function nextLevel() {
+            currentLevel++;
+            loadLevel(currentLevel);
+        }
+
+        // 更新统计
+        function updateStats() {
+            document.getElementById('correct-count').textContent = correctAnswers;
+            document.getElementById('wrong-count').textContent = wrongAnswers;
+            
+            const total = correctAnswers + wrongAnswers;
+            const accuracy = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        // 创建庆祝粒子效果
+        function createCelebrationParticles() {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: #dc2626;
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                    left: ${50 + Math.random() * 100}px;
+                    top: ${50 + Math.random() * 100}px;
+                `;
+                
+                document.body.appendChild(particle);
+                
+                anime({
+                    targets: particle,
+                    translateX: (Math.random() - 0.5) * 200,
+                    translateY: (Math.random() - 0.5) * 200,
+                    scale: [1, 0],
+                    opacity: [1, 0],
+                    duration: 1000,
+                    easing: 'easeOutQuad',
+                    complete: function() {
+                        particle.remove();
+                    }
+                });
+            }
+        }
+
+        // 初始化配置模拟器
+        function initializeConfigSimulator() {
+            const sliders = document.querySelectorAll('.config-slider');
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            
+            // 滑块事件
+            sliders.forEach(slider => {
+                slider.addEventListener('input', updatePreview);
+            });
+            
+            // 复选框事件
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updatePreview);
+            });
+            
+            // 按钮事件
+            document.getElementById('save-config').addEventListener('click', saveConfig);
+            document.getElementById('reset-config').addEventListener('click', resetConfig);
+            
+            // 初始化预览
+            updatePreview();
+        }
+
+        // 更新预览
+        function updatePreview() {
+            const graphicsQuality = document.getElementById('graphics-quality').value;
+            const difficulty = document.getElementById('game-difficulty').value;
+            const blackSilkMode = document.getElementById('black-silk-mode').checked;
+            const particleEffects = document.getElementById('particle-effects').checked;
+            
+            const qualityLabels = ['极低', '低', '中', '高', '极高'];
+            const difficultyLabels = ['简单', '普通', '困难', '专家', '地狱'];
+            
+            document.getElementById('preview-quality').textContent = qualityLabels[graphicsQuality - 1] + '画质';
+            document.getElementById('preview-difficulty').textContent = difficultyLabels[difficulty - 1] + '难度';
+            
+            const previewArea = document.getElementById('preview-area');
+            
+            // 黑丝袜模式
+            if (blackSilkMode) {
+                previewArea.classList.add('black-silk-mode');
+            } else {
+                previewArea.classList.remove('black-silk-mode');
+            }
+            
+            // 粒子效果
+            if (particleEffects) {
+                createFloatingPetals();
+            } else {
+                // 清除花瓣
+                document.querySelectorAll('.petal').forEach(petal => petal.remove());
+            }
+            
+            // 动画效果
+            anime({
+                targets: previewArea,
+                scale: [0.95, 1],
+                duration: 300,
+                easing: 'easeOutQuad'
+            });
+        }
+
+        // 创建飘落花瓣
+        function createFloatingPetals() {
+            if (document.querySelectorAll('.petal').length < 10) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                petal.style.left = Math.random() * 100 + '%';
+                petal.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                petal.style.animationDelay = Math.random() * 2 + 's';
+                
+                document.getElementById('preview-area').appendChild(petal);
+                
+                // 5秒后移除花瓣
+                setTimeout(() => {
+                    if (petal.parentNode) {
+                        petal.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // 保存配置
+        function saveConfig() {
+            const config = {
+                graphicsQuality: document.getElementById('graphics-quality').value,
+                soundVolume: document.getElementById('sound-volume').value,
+                gameDifficulty: document.getElementById('game-difficulty').value,
+                textSpeed: document.getElementById('text-speed').value,
+                blackSilkMode: document.getElementById('black-silk-mode').checked,
+                particleEffects: document.getElementById('particle-effects').checked,
+                classicalMusic: document.getElementById('classical-music').checked
+            };
+            
+            localStorage.setItem('gameConfig', JSON.stringify(config));
+            
+            // 显示保存成功提示
+            const button = document.getElementById('save-config');
+            const originalText = button.textContent;
+            button.textContent = '已保存！';
+            button.classList.add('bg-green-600');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-600');
+            }, 2000);
+        }
+
+        // 重置配置
+        function resetConfig() {
+            document.getElementById('graphics-quality').value = 3;
+            document.getElementById('sound-volume').value = 70;
+            document.getElementById('game-difficulty').value = 3;
+            document.getElementById('text-speed').value = 3;
+            document.getElementById('black-silk-mode').checked = false;
+            document.getElementById('particle-effects').checked = true;
+            document.getElementById('classical-music').checked = true;
+            
+            updatePreview();
+        }
+
+        // 游戏完成
+        function showGameComplete() {
+            const poemGame = document.querySelector('.poem-game');
+            poemGame.innerHTML = `
+                <div class="text-center">
+                    <h3 class="text-3xl font-bold text-white mb-4">🎉 恭喜完成！</h3>
+                    <p class="text-xl text-gray-300 mb-6">您已经成功完成了所有诗词解谜关卡！</p>
+                    <div class="bg-gray-800 p-6 rounded-lg mb-6">
+                        <h4 class="text-lg font-bold text-red-400 mb-3">最终统计</h4>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-2xl font-bold text-green-400">${correctAnswers}</p>
+                                <p class="text-gray-400">正确答案</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-red-400">${wrongAnswers}</p>
+                                <p class="text-gray-400">错误答案</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-yellow-400">${Math.round((correctAnswers / (correctAnswers + wrongAnswers)) * 100)}%</p>
+                                <p class="text-gray-400">准确率</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300">
+                        重新开始
+                    </button>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
